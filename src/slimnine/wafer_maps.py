@@ -3,7 +3,6 @@
 import pandas as pd
 import plotnine as pn
 from dataclasses import dataclass
-from typing import Tuple
 
 
 __all__ = [
@@ -11,6 +10,7 @@ __all__ = [
     "plot_wafermap",
     "plot_wafermap_spectral",
     "plot_wafermap_discrete",
+    "plot_wafermap_discrete_vir",
     "plot_wafermap_diverge",
     "plot_wafermap_passfail",
     "colours_discrete",
@@ -25,25 +25,20 @@ class WaferMapConfig:
     """
 
     Configuration options for wafer map plotting.
-    Defines column names, facet settings, figure size, tile geometry,
-    theming, and layout options used by wafer-map plotting functions.
+    Defines column names, figure size, tile geometry, and layout options
+    used by wafer-map plotting functions.
 
     """
 
     x: str = "x_test"
     y: str = "y_test"
-    facet: str | None = "scribe_id"
-    nrow: int = 1
-    fig_size: Tuple[int, int] = (10, 6)
+    fig_size: tuple[int, int] = (10, 6)
     twidth: float = 3
     theight: float = 3
-    scales: str = "fixed"
     facet_text_size: int = 9
     panel_spacing: int = 0
     expand_lims: bool = False
-    grid_row: str | None = None
-    grid_col: str | None = None
-    plot_theme: callable = pn.theme_bw
+    facet: pn.facet_wrap | pn.facet_grid | None = None
 
 
 def plot_wafermap(
@@ -59,7 +54,7 @@ def plot_wafermap(
     kpi : str
         Column name of the value used to fill the tiles.
     cfg : WaferMapConfig
-        Configuration controlling layout, facets, theme, and geometry.
+        Configuration controlling layout, facets, and geometry.
     Returns
 
     -------
@@ -73,7 +68,6 @@ def plot_wafermap(
     plt = (
         pn.ggplot(df, pn.aes(cfg.x, cfg.y, fill=kpi))
         + pn.geom_tile(width=cfg.twidth, height=cfg.theight)
-        + cfg.plot_theme()
         + pn.coord_fixed(expand=cfg.expand_lims)
         + pn.theme(
             figure_size=cfg.fig_size,
@@ -86,11 +80,8 @@ def plot_wafermap(
         )
     )
 
-    if cfg.grid_row or cfg.grid_col:
-        plt += pn.facet_grid(cfg.grid_row, cfg.grid_col)
-
-    elif cfg.facet:
-        plt += pn.facet_wrap(cfg.facet, nrow=cfg.nrow, scales=cfg.scales)
+    if cfg.facet is not None:
+        plt += cfg.facet
 
     return plt
 
@@ -123,7 +114,7 @@ def plot_wafermap_discrete_vir(
 
 
 def plot_wafermap_diverge(
-    df: pd.DataFrame, kpi: str, midp=0, cfg: WaferMapConfig | None = None
+    df: pd.DataFrame, kpi: str, midp: float = 0, cfg: WaferMapConfig | None = None
 ) -> pn.ggplot:
 
     low = "#4575b4"
