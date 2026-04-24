@@ -1,11 +1,8 @@
 # ---- Imports ---- #
 
 import pandas as pd
-
 import plotnine as pn
-
 from dataclasses import dataclass
-
 from typing import Tuple
 
 
@@ -28,41 +25,24 @@ class WaferMapConfig:
     """
 
     Configuration options for wafer map plotting.
-
-
-
     Defines column names, facet settings, figure size, tile geometry,
-
     theming, and layout options used by wafer-map plotting functions.
 
     """
 
     x: str = "x_test"
-
     y: str = "y_test"
-
     facet: str | None = "scribe_id"
-
     nrow: int = 1
-
     fig_size: Tuple[int, int] = (10, 6)
-
     twidth: float = 3
-
     theight: float = 3
-
     scales: str = "fixed"
-
     facet_text_size: int = 9
-
     panel_spacing: int = 0
-
     expand_lims: bool = False
-
     grid_row: str | None = None
-
     grid_col: str | None = None
-
     plot_theme: callable = pn.theme_bw
 
 
@@ -72,35 +52,19 @@ def plot_wafermap(
     """
 
     Create a wafer map plot using tile geometry.
-
-
-
     Parameters
-
     ----------
-
     df : pandas.DataFrame
-
         Input data containing x/y coordinates and the KPI to plot.
-
     kpi : str
-
         Column name of the value used to fill the tiles.
-
     cfg : WaferMapConfig
-
         Configuration controlling layout, facets, theme, and geometry.
-
-
-
     Returns
 
     -------
-
     plotnine.ggplot
-
         A plotnine wafer map object.
-
     """
 
     if cfg is None:
@@ -163,9 +127,7 @@ def plot_wafermap_diverge(
 ) -> pn.ggplot:
 
     low = "#4575b4"
-
     mid = "#f7f7f7"
-
     high = "#d73027"
 
     plot = plot_wafermap(df, kpi, cfg) + pn.scale_fill_gradient2(
@@ -185,9 +147,7 @@ def plot_wafermap_passfail(
     Pal options:
 
         1: # yellow-blue
-
         2: # muted pink, bright green
-
         3: # bright yellow, muted blue
 
     """
