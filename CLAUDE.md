@@ -4,19 +4,28 @@ Personal data analytics module. Thin wrappers for plotnine plots and pandas/pola
 
 ## Package layout
 
+Plot modules are grouped **by domain**, not by chart geometry. Each domain
+module owns its own `*Config` dataclass and plotting functions.
+
 ```
 src/slimnine/
-    __init__.py   — re-exports plots and munges
-    plots.py      — plotnine chart wrappers
-    munges.py     — pandas / polars helpers
+    __init__.py    — re-exports domain modules
+    wafer_maps.py  — wafer map plots + WaferMapConfig
+    # future:
+    # distributions.py — hist / density / boxplot / violin
+    # timeseries.py    — line / scatter with time axis helpers
+    # palettes.py      — shared colour helpers and fill scales
+    # munges.py        — pandas helpers
+    # munges_pl.py     — polars helpers
 tests/
 ```
 
 ## Key conventions
 
-- **Plots**: each function accepts a DataFrame, column name strings, and optional aesthetic overrides. Returns a `ggplot` object — callers call `.draw()` or save themselves.
-- **Munges**: pandas helpers operate on `pd.DataFrame`, polars helpers on `pl.DataFrame`. Prefix polars functions with `pl_` to avoid name collisions.
-- **Type hints**: use `from __future__ import annotations` and `TYPE_CHECKING` guards for heavy imports (plotnine, polars) so the module is importable without all optional deps installed.
+- **Plots**: each function accepts a DataFrame, column name strings, and a domain `*Config`. Returns a `ggplot` object — callers call `.draw()` or save themselves.
+- **Domain grouping**: new chart types live in a module named after the analysis domain (e.g. `wafer_maps.py`), not the geometry. Each domain has one base plot function plus any domain-specific variants.
+- **Configs**: per-domain frozen dataclass (e.g. `WaferMapConfig`) holds defaults for column names, figure size, facets. Keep defaults domain-appropriate.
+- **Munges** (planned): pandas helpers operate on `pd.DataFrame`, polars helpers on `pl.DataFrame`. Prefix polars functions with `pl_` or keep them in a `munges_pl.py` module.
 - **No side effects**: functions return values; nothing prints or draws automatically.
 - **Style**: ruff, line length 88, imports sorted (I rule).
 
@@ -38,6 +47,8 @@ uv run ruff format src       # format
 
 ## What to add next
 
-- `slimnine/stats.py` — grouped linear models (statsmodels OLS per group), summary tables
-- `slimnine/ml.py` — generic sklearn pipeline boilerplate
-- More plot types: boxplot, violin, faceted variants
+- More domain plot modules: `distributions.py`, `timeseries.py`
+- `palettes.py` — extract shared colour helpers / fill scales so each new domain doesn't re-implement variants
+- `munges.py` / `munges_pl.py` — pandas and polars data helpers
+- `stats.py` — grouped linear models (statsmodels OLS per group), summary tables
+- `ml.py` — generic sklearn pipeline boilerplate
