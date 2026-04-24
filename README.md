@@ -2,14 +2,24 @@
 
 Personal data analytics module. Thin wrappers around plotnine, pandas, and polars for quick exploratory analysis.
 
+Plot modules are grouped **by domain** (wafer maps, distributions, time series, ...) rather than by chart geometry, so each module owns its own config and any variants specific to that analysis type.
+
 ## What's in here
 
 | Module | Contents |
 |---|---|
-| `slimnine.plots` | plotnine chart wrappers (line, scatter, bar, hist) |
-| `slimnine.munges` | pandas / polars data manipulation helpers |
+| `slimnine.wafer_maps` | wafer map plots (tile geometry, spectral / discrete / diverging / pass-fail fills) + `WaferMapConfig` |
 
-More to come: grouped linear models, generic ML boilerplate.
+Planned:
+
+| Module | Contents |
+|---|---|
+| `slimnine.distributions` | hist, density, boxplot, violin |
+| `slimnine.timeseries` | line / scatter with time-axis helpers |
+| `slimnine.palettes` | shared colour helpers and fill scales |
+| `slimnine.munges` / `slimnine.munges_pl` | pandas and polars data helpers |
+| `slimnine.stats` | grouped linear models, summary tables |
+| `slimnine.ml` | generic sklearn pipeline boilerplate |
 
 ## Install
 
@@ -41,10 +51,14 @@ uv run ruff check src
 
 ```python
 import pandas as pd
-from slimnine import plots, munges
+from slimnine.wafer_maps import WaferMapConfig, plot_wafermap_spectral
 
-df = pd.DataFrame({"x": range(10), "y": range(10)})
-plots.line(df, x="x", y="y", title="Example").draw()
+df = pd.DataFrame({
+    "x_test": [...],
+    "y_test": [...],
+    "kpi": [...],
+})
 
-munges.summary(df)
+cfg = WaferMapConfig(twidth=3, theight=3)
+plot_wafermap_spectral(df, kpi="kpi", cfg=cfg).draw()
 ```
