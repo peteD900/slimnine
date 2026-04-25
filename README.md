@@ -49,16 +49,33 @@ uv run ruff check src
 
 ## Quick example
 
+A synthetic 3-lot × 6-wafer dataset (~9k die per wafer, ~162k rows) ships
+with the package — useful for testing plots and exploring the API:
+
 ```python
-import pandas as pd
+import plotnine as pn
+
+from slimnine.example_data import load_wafer_dataset
 from slimnine.wafer_maps import WaferMapConfig, plot_wafermap_spectral
 
-df = pd.DataFrame({
-    "x_test": [...],
-    "y_test": [...],
-    "kpi": [...],
-})
+df = load_wafer_dataset()
 
-cfg = WaferMapConfig(twidth=3, theight=3)
-plot_wafermap_spectral(df, kpi="kpi", cfg=cfg).draw()
+# single-wafer map
+one = df[df["wafer_id"] == "L01_W1"]
+plot_wafermap_spectral(one, kpi="vt").draw()
+
+# faceted across one lot
+cfg = WaferMapConfig(facet=pn.facet_wrap("~wafer_id"))
+plot_wafermap_spectral(df[df["lot_id"] == "L01"], kpi="idsat", cfg).draw()
+```
+
+The bundled dataset has KPIs `vt`, `idsat`, `ileak`, `freq` (with realistic
+spatial signatures and cross-KPI correlations) plus a derived `pass` flag.
+To regenerate it (e.g. at a different size), edit and run
+`scripts/build_example_data.py`. To synthesise data ad-hoc:
+
+```python
+from slimnine.example_data import generate_wafer_dataset
+
+df = generate_wafer_dataset(n_lots=2, wafers_per_lot=3, seed=0)
 ```
