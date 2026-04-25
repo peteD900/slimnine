@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+    - examples/*.qmd
+
+website:
+  title: "slimnine examples"
+  sidebar:
+    style: docked
+    contents:
+      - text: Home
+        href: index.qmd
+      - section: Examples
+        contents:
+          - examples/*.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: false
+    code-tools: true
+
+execute:
+  freeze: auto

@@ -1,9 +1,9 @@
 # ---- Imports ---- #
 
-import pandas as pd
-import plotnine as pn
 from dataclasses import dataclass
 
+import pandas as pd
+import plotnine as pn
 
 __all__ = [
     "WaferMapConfig",

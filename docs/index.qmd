@@ -1,0 +1,27 @@
+---
+title: "slimnine examples"
+listing:
+  - id: example-list
+    contents: examples/*.qmd
+    type: table
+    fields: [title, description]
+    sort: title
+    sort-ui: false
+    filter-ui: false
+---
+
+Worked examples for the [slimnine](https://github.com/peteD900/slimnine)
+plotting helpers, run against the bundled synthetic wafer dataset.
+
+::: {#example-list}
+:::
+
+## Rendering
+
+From the repo root, with the project venv active:
+
+```bash
+uv run quarto render docs           # render the whole site to docs/_site
+uv run quarto preview docs          # live preview on localhost
+uv run quarto render docs/examples/wafer_maps.qmd   # one document
+```

@@ -1,0 +1,123 @@
+---
+title: "Wafer maps"
+description: "Tile plots of die-level KPIs using the bundled example dataset."
+---
+
+## Setup
+
+```{python}
+#| label: setup
+import plotnine as pn
+
+from slimnine.example_data import load_wafer_dataset
+from slimnine.wafer_maps import (
+    WaferMapConfig,
+    plot_wafermap_diverge,
+    plot_wafermap_passfail,
+    plot_wafermap_spectral,
+)
+
+df = load_wafer_dataset()
+df.shape
+```
+
+The bundled dataset has 3 lots × 6 wafers × ~9k die. KPIs are `vt`, `idsat`,
+`ileak`, `freq`; the boolean `pass` column is derived from spec limits on
+the other three.
+
+## Single wafer
+
+Pick one wafer to inspect each KPI's spatial signature.
+
+```{python}
+#| label: pick-wafer
+one = df[df["wafer_id"] == "L01_W1"]
+```
+
+### Threshold voltage (`vt`)
+
+`vt` carries a radial *bowl* — lower in the centre, higher at the edge.
+
+```{python}
+#| label: vt-single
+plot_wafermap_spectral(one, kpi="vt")
+```
+
+### Drive current (`idsat`)
+
+`idsat` is anti-correlated with `vt` via the shared radial term, plus a
+left-to-right gradient.
+
+```{python}
+#| label: idsat-single
+plot_wafermap_spectral(one, kpi="idsat")
+```
+
+### Leakage (`ileak`)
+
+`ileak` shows a soft edge ring, a few Gaussian-blob defect clusters, and
+sparse point defects (single hot dies).
+
+```{python}
+#| label: ileak-single
+plot_wafermap_spectral(one, kpi="ileak")
+```
+
+## Faceted across a lot
+
+Wafers within a lot share their dominant signature but differ in detail.
+
+```{python}
+#| label: vt-facet-lot
+#| fig-width: 12
+#| fig-height: 8
+cfg = WaferMapConfig(
+    facet=pn.facet_wrap("~wafer_id"),
+    fig_size=(12, 8),
+)
+plot_wafermap_spectral(df[df["lot_id"] == "L01"], kpi="vt", cfg=cfg)
+```
+
+## Faceted across all lots
+
+A `lot_id × wafer_no` grid surfaces both lot-level shifts (rows) and
+within-lot variation (columns).
+
+```{python}
+#| label: ileak-grid-all
+#| fig-width: 14
+#| fig-height: 8
+cfg = WaferMapConfig(
+    facet=pn.facet_grid("lot_id ~ wafer_no"),
+    fig_size=(14, 8),
+)
+plot_wafermap_spectral(df, kpi="ileak", cfg=cfg)
+```
+
+## Diverging palette
+
+Centring `freq` on its grand mean highlights wafers above and below
+average.
+
+```{python}
+#| label: freq-diverge
+plot_wafermap_diverge(one, kpi="freq", midp=float(df["freq"].mean()))
+```
+
+## Pass / fail
+
+```{python}
+#| label: pass-single
+plot_wafermap_passfail(one, kpi="pass", pal=2)
+```
+
+```{python}
+#| label: pass-grid
+#| fig-width: 14
+#| fig-height: 8
+cfg = WaferMapConfig(
+    facet=pn.facet_grid("lot_id ~ wafer_no"),
+    fig_size=(14, 8),
+)
+plot_wafermap_passfail(df, kpi="pass", pal=2, cfg=cfg)
+```
