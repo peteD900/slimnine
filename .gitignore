@@ -22,3 +22,9 @@ uv.lock
 
 # OS
 .DS_Store
+
+# Quarto
+/docs/_site/
+/docs/_freeze/
+/docs/.quarto/
+/docs/**/*_files/

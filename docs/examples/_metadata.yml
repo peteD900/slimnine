@@ -1,0 +1,14 @@
+# Defaults shared by every example .qmd in this folder.
+# Override per-document in the YAML front matter.
+
+execute:
+  echo: true
+  warning: false
+  message: false
+
+format:
+  html:
+    fig-width: 9
+    fig-height: 6
+    fig-format: png
+    fig-dpi: 110

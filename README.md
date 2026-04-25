@@ -79,3 +79,18 @@ from slimnine.example_data import generate_wafer_dataset
 
 df = generate_wafer_dataset(n_lots=2, wafers_per_lot=3, seed=0)
 ```
+
+## Example documents
+
+Worked examples live under `docs/` as a [Quarto](https://quarto.org)
+website. Drop a new `.qmd` in `docs/examples/` and it will be picked up
+automatically by the sidebar and home-page listing.
+
+```bash
+uv run quarto preview docs                          # live preview
+uv run quarto render docs                           # render the whole site to docs/_site
+uv run quarto render docs/examples/wafer_maps.qmd   # render one document
+```
+
+Project-wide settings live in `docs/_quarto.yml`; per-folder defaults for
+the `examples/` collection live in `docs/examples/_metadata.yml`.
