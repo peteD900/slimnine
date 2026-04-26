@@ -113,3 +113,38 @@ def test_plot_smoke(small_df: pd.DataFrame) -> None:
     one = small_df[small_df["wafer_id"] == "L01_W1"]
     plot = plot_wafermap_spectral(one, kpi="vt")
     plot.draw()
+
+
+def test_diagonal_gradient_produces_spatial_variation() -> None:
+    # Force a strong diagonal gradient to confirm it creates within-wafer
+    # ileak variation correlated with a known direction.
+    from slimnine.example_data import _Params, _gen_wafer_kpis, _build_grid
+
+    x, y, r, _, _, _ = _build_grid(1.0, 1.0, 53.5)
+    rng = np.random.default_rng(7)
+    p = _Params(
+        bowl_strength=0.0,
+        vt_grad_angle=0.0,
+        idsat_grad_angle=0.0,
+        ring_strength=0.0,
+        defect_rate=0.0,
+        n_clusters=0,
+        diag_angle=45.0,   # TL→BR at 45°
+        diag_strength=1.0,  # maximum strength
+        scratch_prob=0.0,
+        n_scratches=0,
+    )
+    vt, _, _, _, _ = _gen_wafer_kpis(x, y, r, 53.5, p, rng)
+    proj = (x * np.cos(np.deg2rad(45)) + y * np.sin(np.deg2rad(45)))
+    assert np.corrcoef(vt, proj)[0, 1] > 0.3
+
+
+def test_scratches_elevate_ileak() -> None:
+    # _gen_scratches must return a non-zero bump array for n_scratches > 0.
+    from slimnine.example_data import _gen_scratches, _build_grid
+
+    x, y, r, _, _, _ = _build_grid(1.0, 1.0, 53.5)
+    bump = _gen_scratches(x, y, 53.5, np.random.default_rng(42), n_scratches=2)
+    assert bump.dtype == np.float32
+    assert (bump > 0).any(), "expected at least one die inside a scratch region"
+    assert bump.max() >= 0.4, "scratch ileak bump should be at least min(U[0.4, 1.5])"
