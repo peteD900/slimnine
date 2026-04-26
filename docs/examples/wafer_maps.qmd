@@ -49,7 +49,9 @@ cfg = WaferMapConfig(
     panel_spacing=0.01
 )
 
-plot_wafermap_spectral(df, kpi="vt", cfg=cfg)
+for kpi in kpis:
+    plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)
+    plot.show()
 ```
 
 ## Pass / fail
