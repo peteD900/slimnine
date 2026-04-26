@@ -94,3 +94,25 @@ uv run quarto render docs/examples/wafer_maps.qmd   # render one document
 
 Project-wide settings live in `docs/_quarto.yml`; per-folder defaults for
 the `examples/` collection live in `docs/examples/_metadata.yml`.
+
+### Publishing the site to GitHub Pages
+
+Quarto can build the site and push it to a `gh-pages` branch in one
+command. **First-time setup**, on GitHub: repo → *Settings* → *Pages* →
+*Source: Deploy from a branch* → branch `gh-pages` / folder `/ (root)` →
+*Save*.
+
+Then, from the repo root with the dev venv active:
+
+```bash
+uv run quarto publish gh-pages docs
+```
+
+The first run asks to confirm the target and writes `docs/_publish.yml`
+recording it (commit that file). Subsequent runs render and push in one
+step. The site will be live at `https://<your-username>.github.io/slimnine/`
+within a minute or two.
+
+To re-publish after edits, just re-run the same command. CI-driven
+auto-publishing on push to `main` can be added later as a GitHub Actions
+workflow.
