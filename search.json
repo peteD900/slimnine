@@ -1,0 +1,57 @@
+[
+  {
+    "objectID": "examples/wafer_maps.html",
+    "href": "examples/wafer_maps.html",
+    "title": "Wafer maps",
+    "section": "",
+    "text": "import plotnine as pn\npn.theme_set(pn.theme_minimal())\n\nfrom slimnine.example_data import load_wafer_dataset\nfrom slimnine.wafer_maps import (\n    WaferMapConfig,\n    plot_wafermap_diverge,\n    plot_wafermap_passfail,\n    plot_wafermap_spectral,\n)\n\ndf = load_wafer_dataset()\ndf.shape\nkpis = ['vt', 'idsat', 'ileak', 'freq']"
+  },
+  {
+    "objectID": "examples/wafer_maps.html#setup",
+    "href": "examples/wafer_maps.html#setup",
+    "title": "Wafer maps",
+    "section": "",
+    "text": "import plotnine as pn\npn.theme_set(pn.theme_minimal())\n\nfrom slimnine.example_data import load_wafer_dataset\nfrom slimnine.wafer_maps import (\n    WaferMapConfig,\n    plot_wafermap_diverge,\n    plot_wafermap_passfail,\n    plot_wafermap_spectral,\n)\n\ndf = load_wafer_dataset()\ndf.shape\nkpis = ['vt', 'idsat', 'ileak', 'freq']"
+  },
+  {
+    "objectID": "examples/wafer_maps.html#data",
+    "href": "examples/wafer_maps.html#data",
+    "title": "Wafer maps",
+    "section": "Data",
+    "text": "Data\n\ndf.head()\n\n\n\n\n\n\n\n\nlot_id\nwafer_id\nwafer_no\nx_test\ny_test\nrow\ncol\ndie_id\nradius\nvt\nidsat\nileak\nfreq\npass\n\n\n\n\n0\nL01\nL01_W1\n1\n-7.0\n-53.0\n107\n47\n107.047\n53.460266\n421.196655\n744.040527\n1.299517\n1260.561890\nFalse\n\n\n1\nL01\nL01_W1\n1\n-6.0\n-53.0\n107\n48\n107.048\n53.338543\n423.639282\n754.190918\n1.331304\n1314.362793\nFalse\n\n\n2\nL01\nL01_W1\n1\n-5.0\n-53.0\n107\n49\n107.049\n53.235325\n418.899841\n767.694702\n1.254430\n1327.068848\nFalse\n\n\n3\nL01\nL01_W1\n1\n-4.0\n-53.0\n107\n50\n107.050\n53.150730\n424.850250\n738.990356\n1.323661\n1243.635742\nFalse\n\n\n4\nL01\nL01_W1\n1\n-3.0\n-53.0\n107\n51\n107.051\n53.084839\n416.719666\n750.011414\n1.235050\n1310.473389\nFalse\n\n\n\n\n\n\n\nThe bundled dataset has 3 lots × 6 wafers × ~9k die. KPIs are vt, idsat, ileak, freq; the boolean pass column is derived from spec limits on the other three."
+  },
+  {
+    "objectID": "examples/wafer_maps.html#kpi-spectral",
+    "href": "examples/wafer_maps.html#kpi-spectral",
+    "title": "Wafer maps",
+    "section": "KPI spectral",
+    "text": "KPI spectral\nA lot_id × wafer_no grid surfaces both lot-level shifts (rows) and within-lot variation (columns).\n\ncfg = WaferMapConfig(\n    facet=pn.facet_wrap(\"wafer_id\", nrow = 3),\n    fig_size=(14, 8),\n    panel_spacing=0.01\n)\n\nfor kpi in kpis:\n    plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)\n    plot.show()"
+  },
+  {
+    "objectID": "examples/wafer_maps.html#pass-fail",
+    "href": "examples/wafer_maps.html#pass-fail",
+    "title": "Wafer maps",
+    "section": "Pass / fail",
+    "text": "Pass / fail\n\nplot_wafermap_passfail(df, kpi=\"pass\", cfg=cfg)"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "slimnine examples",
+    "section": "",
+    "text": "Worked examples for the slimnine plotting helpers, run against the bundled synthetic wafer dataset.",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "index.html#rendering",
+    "href": "index.html#rendering",
+    "title": "slimnine examples",
+    "section": "Rendering",
+    "text": "Rendering\nFrom the repo root, with the project venv active:\nuv run quarto render docs           # render the whole site to docs/_site\nuv run quarto preview docs          # live preview on localhost\nuv run quarto render docs/examples/wafer_maps.qmd   # one document",
+    "crumbs": [
+      "Home"
+    ]
+  }
+]
