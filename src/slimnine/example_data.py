@@ -17,12 +17,80 @@ import numpy as np
 import pandas as pd
 
 __all__ = [
+    "VariationConfig",
     "generate_wafer_dataset",
     "load_wafer_dataset",
 ]
 
 
 _DATA_FILE = "example_wafers.parquet"
+
+
+# ---- User-facing config ---- #
+
+
+@dataclass(frozen=True)
+class VariationConfig:
+    """High-level dials for tuning synthetic wafer dataset variation.
+
+    Each field is a multiplier on the corresponding internal baseline.
+    ``1.0`` reproduces the default dataset; raise above ``1.0`` to amplify
+    that effect, drop below to suppress it.
+
+    Variation between groups
+    ------------------------
+    lot_to_lot
+        Widens (or narrows) the uniform ranges from which per-lot parameters
+        are drawn. Larger values -> bigger differences between lots.
+    wafer_to_wafer
+        Scales the per-wafer jitter applied to lot parameters. Larger values
+        -> wafers within the same lot diverge more from each other.
+    within_wafer_noise
+        Scales the per-die Gaussian noise added to every KPI.
+
+    Spatial signature amplitudes
+    ----------------------------
+    gradient_strength
+        Multiplies the across-wafer linear gradient amplitude on vt, idsat
+        and the ileak diagonal contribution.
+    bowl_strength
+        Multiplies the radial-bowl amplitude on vt and idsat.
+    edge_ring_strength
+        Multiplies the edge-ring contribution to ileak.
+    defect_strength
+        Multiplies both the cluster and sparse-defect contributions to ileak.
+
+    Scratch effects
+    ---------------
+    scratch_kpi_impact
+        Multiplies the KPI hit (ileak bump and vt drop) on dies hit by a
+        scratch. Does NOT change how often scratches occur.
+    scratch_incidence
+        Multiplies the per-lot scratch probability (clipped to [0, 1]),
+        i.e. controls how many wafers actually get scratches.
+    """
+
+    # Variation between groups.
+    lot_to_lot: float = 1.0
+    wafer_to_wafer: float = 1.0
+    within_wafer_noise: float = 1.0
+
+    # Spatial signature amplitudes.
+    gradient_strength: float = 1.0
+    bowl_strength: float = 1.0
+    edge_ring_strength: float = 1.0
+    defect_strength: float = 1.0
+
+    # Scratch effects.
+    scratch_kpi_impact: float = 1.0
+    scratch_incidence: float = 1.0
+
+
+def _widen(lo: float, hi: float, k: float) -> tuple[float, float]:
+    """Widen a uniform-range [lo, hi] around its midpoint by factor k."""
+    mid = 0.5 * (lo + hi)
+    half = 0.5 * (hi - lo) * k
+    return mid - half, mid + half
 
 
 # ---- Geometry ---- #
@@ -227,33 +295,58 @@ class _Params:
     n_scratches: int
 
 
-def _draw_lot_params(rng: np.random.Generator) -> _Params:
+def _draw_lot_params(
+    rng: np.random.Generator, cfg: VariationConfig | None = None
+) -> _Params:
+    if cfg is None:
+        cfg = VariationConfig()
+    k = cfg.lot_to_lot
+
+    bowl_lo, bowl_hi = _widen(0.7, 1.3, k)
+    vt_a_lo, vt_a_hi = _widen(-60.0, -30.0, k)  # ~ TL -> BR
+    id_a_lo, id_a_hi = _widen(-15.0, 15.0, k)  # ~ L -> R
+    ring_lo, ring_hi = _widen(0.6, 1.4, k)
+    def_lo, def_hi = _widen(0.002, 0.008, k)
+    diag_a_lo, diag_a_hi = _widen(-90.0, 90.0, k)
+    diag_s_lo, diag_s_hi = _widen(0.0, 0.6, k)
+    scr_lo, scr_hi = _widen(0.0, 0.5, k)
+
+    raw_scratch_prob = float(rng.uniform(scr_lo, scr_hi))
+    scratch_prob = float(np.clip(raw_scratch_prob * cfg.scratch_incidence, 0.0, 1.0))
+
     return _Params(
-        bowl_strength=float(rng.uniform(0.7, 1.3)),
-        vt_grad_angle=float(rng.uniform(-60.0, -30.0)),  # ~ TL -> BR
-        idsat_grad_angle=float(rng.uniform(-15.0, 15.0)),  # ~ L -> R
-        ring_strength=float(rng.uniform(0.6, 1.4)),
-        defect_rate=float(rng.uniform(0.002, 0.008)),
+        bowl_strength=float(rng.uniform(bowl_lo, bowl_hi)),
+        vt_grad_angle=float(rng.uniform(vt_a_lo, vt_a_hi)),
+        idsat_grad_angle=float(rng.uniform(id_a_lo, id_a_hi)),
+        ring_strength=float(rng.uniform(ring_lo, ring_hi)),
+        defect_rate=max(5e-4, float(rng.uniform(def_lo, def_hi))),
         n_clusters=int(rng.integers(2, 5)),
-        diag_angle=float(rng.uniform(-90.0, 90.0)),
-        diag_strength=float(rng.uniform(0.0, 0.6)),
-        scratch_prob=float(rng.uniform(0.0, 0.5)),
+        diag_angle=float(rng.uniform(diag_a_lo, diag_a_hi)),
+        diag_strength=max(0.0, float(rng.uniform(diag_s_lo, diag_s_hi))),
+        scratch_prob=scratch_prob,
         n_scratches=0,  # set per-wafer in _jitter_for_wafer
     )
 
 
-def _jitter_for_wafer(lot: _Params, rng: np.random.Generator) -> _Params:
+def _jitter_for_wafer(
+    lot: _Params, rng: np.random.Generator, cfg: VariationConfig | None = None
+) -> _Params:
+    if cfg is None:
+        cfg = VariationConfig()
+    w = cfg.wafer_to_wafer
+
     def j(scale: float = 0.15) -> float:
-        return 1.0 + float(rng.uniform(-scale, scale))
+        s = scale * w
+        return 1.0 + float(rng.uniform(-s, s))
 
     return _Params(
         bowl_strength=lot.bowl_strength * j(),
-        vt_grad_angle=lot.vt_grad_angle + float(rng.uniform(-10.0, 10.0)),
-        idsat_grad_angle=lot.idsat_grad_angle + float(rng.uniform(-10.0, 10.0)),
+        vt_grad_angle=lot.vt_grad_angle + float(rng.uniform(-10.0 * w, 10.0 * w)),
+        idsat_grad_angle=lot.idsat_grad_angle + float(rng.uniform(-10.0 * w, 10.0 * w)),
         ring_strength=lot.ring_strength * j(),
         defect_rate=max(5e-4, lot.defect_rate * j()),
         n_clusters=max(1, int(round(lot.n_clusters * j()))),
-        diag_angle=lot.diag_angle + float(rng.uniform(-20.0, 20.0)),
+        diag_angle=lot.diag_angle + float(rng.uniform(-20.0 * w, 20.0 * w)),
         diag_strength=max(0.0, lot.diag_strength * j(0.2)),
         scratch_prob=lot.scratch_prob,
         n_scratches=int(rng.binomial(2, lot.scratch_prob)),
@@ -270,8 +363,18 @@ def _gen_wafer_kpis(
     max_radius: float,
     p: _Params,
     rng: np.random.Generator,
+    cfg: VariationConfig | None = None,
 ):
+    if cfg is None:
+        cfg = VariationConfig()
     n = len(x)
+
+    bowl_amp = cfg.bowl_strength
+    grad_amp = cfg.gradient_strength
+    ring_amp = cfg.edge_ring_strength
+    def_amp = cfg.defect_strength
+    noise_amp = cfg.within_wafer_noise
+    scratch_amp = cfg.scratch_kpi_impact
 
     bowl = _radial_bowl(r, max_radius).astype(np.float32)
     vt_grad = _gradient(x, y, p.vt_grad_angle, max_radius).astype(np.float32)
@@ -280,18 +383,18 @@ def _gen_wafer_kpis(
 
     vt = (
         400.0
-        + 30.0 * p.bowl_strength * (bowl - 0.5)
-        + 6.0 * (vt_grad - 0.5)
-        + 10.0 * p.diag_strength * (diag - 0.5)
-        + rng.normal(0.0, 4.0, n)
+        + 30.0 * bowl_amp * p.bowl_strength * (bowl - 0.5)
+        + 6.0 * grad_amp * (vt_grad - 0.5)
+        + 10.0 * grad_amp * p.diag_strength * (diag - 0.5)
+        + rng.normal(0.0, 4.0 * noise_amp, n)
     ).astype(np.float32)
 
     idsat = (
         800.0
-        - 60.0 * p.bowl_strength * (bowl - 0.5)
-        + 18.0 * (idsat_grad - 0.5)
-        - 20.0 * p.diag_strength * (diag - 0.5)
-        + rng.normal(0.0, 12.0, n)
+        - 60.0 * bowl_amp * p.bowl_strength * (bowl - 0.5)
+        + 18.0 * grad_amp * (idsat_grad - 0.5)
+        - 20.0 * grad_amp * p.diag_strength * (diag - 0.5)
+        + rng.normal(0.0, 12.0 * noise_amp, n)
     ).astype(np.float32)
 
     ring = _edge_ring(r, max_radius, sigma=max_radius * 0.08).astype(np.float32)
@@ -303,17 +406,19 @@ def _gen_wafer_kpis(
 
     ileak = (
         1.0
-        + 0.4 * p.ring_strength * ring
-        + 1.5 * clusters
-        + 2.0 * defects
-        + 0.1 * p.diag_strength * (diag - 0.5)
-        + scratches
-        + rng.normal(0.0, 0.05, n)
+        + 0.4 * ring_amp * p.ring_strength * ring
+        + 1.5 * def_amp * clusters
+        + 2.0 * def_amp * defects
+        + 0.1 * grad_amp * p.diag_strength * (diag - 0.5)
+        + scratch_amp * scratches
+        + rng.normal(0.0, 0.05 * noise_amp, n)
     ).astype(np.float32)
     ileak = np.maximum(ileak, np.float32(0.05))
 
     scratch_mask = scratches > 0
-    vt = np.where(scratch_mask, vt - np.float32(3.0), vt).astype(np.float32)
+    vt = np.where(scratch_mask, vt - np.float32(3.0 * scratch_amp), vt).astype(
+        np.float32
+    )
 
     z_vt = (vt - vt.mean()) / (vt.std() + 1e-9)
     z_idsat = (idsat - idsat.mean()) / (idsat.std() + 1e-9)
@@ -323,7 +428,7 @@ def _gen_wafer_kpis(
         + 60.0 * z_idsat
         - 40.0 * z_vt
         - 30.0 * z_ileak
-        + rng.normal(0.0, 15.0, n)
+        + rng.normal(0.0, 15.0 * noise_amp, n)
     ).astype(np.float32)
 
     pass_flag = (ileak < 1.5) & (vt > 370.0) & (vt < 430.0) & (freq > 1400.0)
@@ -340,6 +445,7 @@ def generate_wafer_dataset(
     pitch_y: float = 1.0,
     max_radius: float = 53.5,
     seed: int = 0,
+    config: VariationConfig | None = None,
 ) -> pd.DataFrame:
     """Generate a synthetic multi-lot wafer dataset.
 
@@ -353,6 +459,11 @@ def generate_wafer_dataset(
         Wafer radius in mm; die outside the disk are dropped.
     seed
         Seed for `numpy.random.default_rng`. Same seed -> identical output.
+    config
+        `VariationConfig` controlling lot-to-lot, wafer-to-wafer and
+        within-wafer variation magnitudes plus per-effect amplitudes
+        (gradient, bowl, edge ring, defects, scratches). Defaults to
+        `VariationConfig()`, which reproduces the bundled fixture.
 
     Returns
     -------
@@ -360,6 +471,8 @@ def generate_wafer_dataset(
         One row per die. Columns: lot_id, wafer_id, wafer_no, x_test, y_test,
         row, col, die_id, radius, vt, idsat, ileak, freq, pass.
     """
+    if config is None:
+        config = VariationConfig()
     rng = np.random.default_rng(seed)
 
     x, y, r, row, col, die_id = _build_grid(pitch_x, pitch_y, max_radius)
@@ -367,11 +480,13 @@ def generate_wafer_dataset(
     frames: list[pd.DataFrame] = []
     for li in range(1, n_lots + 1):
         lot_id = f"L{li:02d}"
-        lot_params = _draw_lot_params(rng)
+        lot_params = _draw_lot_params(rng, config)
         for wi in range(1, wafers_per_lot + 1):
             wafer_id = f"{lot_id}_W{wi}"
-            wp = _jitter_for_wafer(lot_params, rng)
-            vt, idsat, ileak, freq, pf = _gen_wafer_kpis(x, y, r, max_radius, wp, rng)
+            wp = _jitter_for_wafer(lot_params, rng, config)
+            vt, idsat, ileak, freq, pf = _gen_wafer_kpis(
+                x, y, r, max_radius, wp, rng, config
+            )
 
             frames.append(
                 pd.DataFrame(

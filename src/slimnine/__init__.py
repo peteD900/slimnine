@@ -1,4 +1,5 @@
 from slimnine.example_data import (  # noqa: F401
+    VariationConfig,
     generate_wafer_dataset,
     load_wafer_dataset,
 )
