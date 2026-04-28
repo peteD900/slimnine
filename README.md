@@ -49,16 +49,16 @@ uv run ruff check src
 
 ## Quick example
 
-A synthetic 3-lot × 6-wafer dataset (~9k die per wafer, ~162k rows) ships
-with the package — useful for testing plots and exploring the API:
+`generate_wafer_dataset` synthesises a multi-lot, multi-wafer DataFrame on
+demand — useful for testing plots and exploring the API:
 
 ```python
 import plotnine as pn
 
-from slimnine.example_data import load_wafer_dataset
+from slimnine.example_data import generate_wafer_dataset
 from slimnine.wafer_maps import WaferMapConfig, plot_wafermap_spectral
 
-df = load_wafer_dataset()
+df = generate_wafer_dataset(seed=0)
 
 # single-wafer map
 one = df[df["wafer_id"] == "L01_W1"]
@@ -69,15 +69,16 @@ cfg = WaferMapConfig(facet=pn.facet_wrap("~wafer_id"))
 plot_wafermap_spectral(df[df["lot_id"] == "L01"], kpi="idsat", cfg).draw()
 ```
 
-The bundled dataset has KPIs `vt`, `idsat`, `ileak`, `freq` (with realistic
-spatial signatures and cross-KPI correlations) plus a derived `pass` flag.
-To regenerate it (e.g. at a different size), edit and run
-`scripts/build_example_data.py`. To synthesise data ad-hoc:
+The default dataset is 3 lots × 6 wafers × ~9k die. KPIs are `vt`, `idsat`,
+`ileak`, `freq` (with realistic spatial signatures and cross-KPI
+correlations) plus a derived `pass` flag. Pass a `VariationConfig` to dial
+lot-to-lot, wafer-to-wafer or signature amplitudes up or down:
 
 ```python
-from slimnine.example_data import generate_wafer_dataset
+from slimnine import VariationConfig, generate_wafer_dataset
 
-df = generate_wafer_dataset(n_lots=2, wafers_per_lot=3, seed=0)
+cfg = VariationConfig(gradient_strength=4.0, scratch_kpi_impact=5.0)
+df = generate_wafer_dataset(n_lots=2, wafers_per_lot=3, seed=0, config=cfg)
 ```
 
 ## Example documents

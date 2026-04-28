@@ -1,16 +1,13 @@
 """Synthetic wafer-probe data for examples and tests.
 
 Provides a deterministic generator (`generate_wafer_dataset`) that produces a
-multi-lot, multi-wafer DataFrame with realistic spatial signatures, and a
-loader (`load_wafer_dataset`) that reads the bundled parquet shipped with the
-package.
+multi-lot, multi-wafer DataFrame with realistic spatial signatures.
 """
 
 # ---- Imports ---- #
 
 from __future__ import annotations
 
-import importlib.resources as _res
 from dataclasses import dataclass
 
 import numpy as np
@@ -19,11 +16,7 @@ import pandas as pd
 __all__ = [
     "VariationConfig",
     "generate_wafer_dataset",
-    "load_wafer_dataset",
 ]
-
-
-_DATA_FILE = "example_wafers.parquet"
 
 
 # ---- User-facing config ---- #
@@ -513,23 +506,3 @@ def generate_wafer_dataset(
     out["lot_id"] = out["lot_id"].astype("category")
     out["wafer_id"] = out["wafer_id"].astype("category")
     return out
-
-
-def load_wafer_dataset() -> pd.DataFrame:
-    """Load the bundled example wafer dataset.
-
-    Reads the parquet committed at `slimnine/data/example_wafers.parquet`
-    via polars and assembles a pandas DataFrame column-by-column to avoid
-    requiring pyarrow at runtime. `lot_id` / `wafer_id` are restored to
-    categorical dtype.
-    """
-    import polars as pl
-
-    resource = _res.files("slimnine").joinpath("data", _DATA_FILE)
-    with _res.as_file(resource) as path:
-        plf = pl.read_parquet(path)
-
-    df = pd.DataFrame({c: plf[c].to_numpy() for c in plf.columns})
-    for c in ("lot_id", "wafer_id"):
-        df[c] = df[c].astype("category")
-    return df

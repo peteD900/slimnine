@@ -1,6 +1,6 @@
 ---
 title: "Wafer maps"
-description: "Tile plots of die-level KPIs using the bundled example dataset."
+description: "Tile plots of die-level KPIs using a synthetic example dataset."
 ---
 
 ## Setup
@@ -10,7 +10,7 @@ description: "Tile plots of die-level KPIs using the bundled example dataset."
 import plotnine as pn
 pn.theme_set(pn.theme_minimal())
 
-from slimnine.example_data import load_wafer_dataset
+from slimnine.example_data import generate_wafer_dataset
 from slimnine.wafer_maps import (
     WaferMapConfig,
     plot_wafermap_diverge,
@@ -18,7 +18,7 @@ from slimnine.wafer_maps import (
     plot_wafermap_spectral,
 )
 
-df = load_wafer_dataset()
+df = generate_wafer_dataset(seed=0)
 df.shape
 kpis = ['vt', 'idsat', 'ileak', 'freq']
 ```
@@ -31,7 +31,7 @@ kpis = ['vt', 'idsat', 'ileak', 'freq']
 df.head()
 ```
 
-The bundled dataset has 3 lots × 6 wafers × ~9k die. KPIs are `vt`, `idsat`,
+The example dataset has 3 lots × 6 wafers × ~9k die. KPIs are `vt`, `idsat`,
 `ileak`, `freq`; the boolean `pass` column is derived from spec limits on
 the other three.
 
