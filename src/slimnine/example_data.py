@@ -20,8 +20,6 @@ __all__ = [
 
 
 # ---- User-facing config ---- #
-
-
 @dataclass(frozen=True)
 class VariationConfig:
     """High-level dials for tuning synthetic wafer dataset variation.
@@ -77,6 +75,15 @@ class VariationConfig:
     # Scratch effects.
     scratch_kpi_impact: float = 1.0
     scratch_incidence: float = 1.0
+
+
+DEFAULT_CONFIG = VariationConfig(
+    wafer_to_wafer=2.5,
+    within_wafer_noise=0.5,
+    gradient_strength=4,
+    scratch_kpi_impact=4,
+    scratch_incidence=3,
+)
 
 
 def _widen(lo: float, hi: float, k: float) -> tuple[float, float]:
@@ -465,7 +472,7 @@ def generate_wafer_dataset(
         row, col, die_id, radius, vt, idsat, ileak, freq, pass.
     """
     if config is None:
-        config = VariationConfig()
+        config = DEFAULT_CONFIG
     rng = np.random.default_rng(seed)
 
     x, y, r, row, col, die_id = _build_grid(pitch_x, pitch_y, max_radius)

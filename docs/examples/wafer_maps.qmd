@@ -10,7 +10,7 @@ description: "Tile plots of die-level KPIs using a synthetic example dataset."
 import plotnine as pn
 pn.theme_set(pn.theme_minimal())
 
-from slimnine.example_data import generate_wafer_dataset
+from slimnine.example_data import generate_wafer_dataset, VariationConfig
 from slimnine.wafer_maps import (
     WaferMapConfig,
     plot_wafermap_diverge,
@@ -49,6 +49,9 @@ cfg = WaferMapConfig(
     panel_spacing=0.01
 )
 
+vcg = VariationConfig()
+df = generate_wafer_dataset(seed=0, )
+
 for kpi in kpis:
     plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)
     plot.show()
@@ -59,4 +62,17 @@ for kpi in kpis:
 ```{python}
 #| label: pass-single
 plot_wafermap_passfail(df, kpi="pass", cfg=cfg)
+```
+
+
+## Tweak data
+
+```{python}
+var_conf = VariationConfig(wafer_to_wafer=2.5, within_wafer_noise=0.5, gradient_strength=4, scratch_kpi_impact=4, scratch_incidence=3)
+df = generate_wafer_dataset(seed=0, config=var_conf)
+
+kpi_plot = ["vt"]
+for kpi in kpi_plot:
+    plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)
+    plot.show()
 ```
