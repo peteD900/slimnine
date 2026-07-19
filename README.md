@@ -4,22 +4,20 @@ Personal data analytics module. Thin wrappers around plotnine, pandas, and polar
 
 Plot modules are grouped **by domain** (wafer maps, distributions, time series, ...) rather than by chart geometry, so each module owns its own config and any variants specific to that analysis type.
 
+**Hosted examples & tools:** <https://peted900.github.io/slimnine/>
+
 ## What's in here
 
 | Module | Contents |
 |---|---|
 | `slimnine.wafer_maps` | wafer map plots (tile geometry, spectral / discrete / diverging / pass-fail fills) + `WaferMapConfig` |
+| `slimnine.example_data` | `generate_wafer_dataset` synthetic multi-lot wafer data + `VariationConfig` |
 
-Planned:
+Interactive tools (hosted on the docs site, no install needed):
 
-| Module | Contents |
+| Tool | What it does |
 |---|---|
-| `slimnine.distributions` | hist, density, boxplot, violin |
-| `slimnine.timeseries` | line / scatter with time-axis helpers |
-| `slimnine.palettes` | shared colour helpers and fill scales |
-| `slimnine.munges` / `slimnine.munges_pl` | pandas and polars data helpers |
-| `slimnine.stats` | grouped linear models, summary tables |
-| `slimnine.ml` | generic sklearn pipeline boilerplate |
+| [Split DOE wafer count estimator](https://peted900.github.io/slimnine/tools/split_doe_power.html) | wafers needed for a control-vs-trial yield split to detect a given yield delta, from an estimate of wafer-to-wafer spread |
 
 ## Install
 
@@ -84,8 +82,10 @@ df = generate_wafer_dataset(n_lots=2, wafers_per_lot=3, seed=0, config=cfg)
 ## Example documents
 
 Worked examples live under `docs/` as a [Quarto](https://quarto.org)
-website. Drop a new `.qmd` in `docs/examples/` and it will be picked up
-automatically by the sidebar and home-page listing.
+website, published at <https://peted900.github.io/slimnine/>. Drop a new
+`.qmd` in `docs/examples/` and it will be picked up automatically by the
+sidebar and home-page listing. Standalone HTML tools (like the split DOE
+estimator) live in `docs/tools/` and are linked from the sidebar.
 
 ```bash
 uv run quarto preview docs                          # live preview
@@ -111,9 +111,7 @@ uv run quarto publish gh-pages docs
 
 The first run asks to confirm the target and writes `docs/_publish.yml`
 recording it (commit that file). Subsequent runs render and push in one
-step. The site will be live at `https://<your-username>.github.io/slimnine/`
+step. The site will be live at `https://peted900.github.io/slimnine/`
 within a minute or two.
 
-To re-publish after edits, just re-run the same command. CI-driven
-auto-publishing on push to `main` can be added later as a GitHub Actions
-workflow.
+To re-publish after edits, just re-run the same command.

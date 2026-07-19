@@ -4,6 +4,8 @@ project:
   render:
     - index.qmd
     - examples/*.qmd
+  resources:
+    - tools/*.html
 
 website:
   title: "slimnine examples"
@@ -15,6 +17,10 @@ website:
       - section: Examples
         contents:
           - examples/*.qmd
+      - section: Tools
+        contents:
+          - text: Split DOE wafer estimator
+            href: tools/split_doe_power.html
 
 format:
   html:
