@@ -99,7 +99,6 @@
   th { color: var(--text-secondary); font-weight: 600; }
   th:first-child, td:first-child { text-align: left; }
   tbody tr:last-child td { border-bottom: none; }
-  tr.lot-row td { font-weight: 600; }
   /* segmented toggle */
   .toggle-row { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.9rem; }
   .toggle-row .toggle-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -147,17 +146,10 @@
         <input type="number" id="sigmaNum" min="0.2" max="10" step="0.1" value="2">
       </div>
     </div>
-    <div class="control">
-      <label for="lot">Wafers available in the lot</label>
-      <div class="row">
-        <input type="number" id="lot" min="4" max="500" step="1" value="25">
-        <span class="hint">raise this if you can pool identical lots</span>
-      </div>
-    </div>
   </div>
 
   <div class="card">
-    <h2>Best case with this lot</h2>
+    <h2>Best case (all 26 wafers)</h2>
     <div class="tile">
       <div class="stat">
         <div class="value" id="mde80">&ndash;</div>
@@ -380,7 +372,7 @@ function selectedPower() {
 
 function render() {
   const sigma = parseFloat($("sigmaNum").value) || parseFloat($("sigma").value);
-  const lot = Math.max(4, parseInt($("lot").value, 10) || 25);
+  const lot = 26;
   const power = selectedPower();
   const pctLabel = power === 0.9 ? "90" : "80";
   const ratio = RATIOS[parseInt($("ratio").value, 10)];
@@ -398,23 +390,19 @@ function render() {
     $("mde80label").textContent = "lot too small for this split";
   }
 
-  /* build table rows for a range of total-wafer counts up to lot size */
-  const candidates = [4, 6, 8, 10, 12, 16, 20, 25, 30, 40, 50, 75, 100];
-  const rows = candidates.filter(n => n <= lot);
-  if (!rows.includes(lot) && lot >= 4) rows.push(lot);
-  rows.sort((a, b) => a - b);
+  /* build table rows for total-wafer counts up to 26 */
+  const rows = [4, 6, 8, 10, 12, 16, 20, 24, 26];
 
   const tbody = $("results").querySelector("tbody");
   tbody.textContent = "";
   for (const n of rows) {
     const result = minDetectableDelta(sigma, n, ratio.r, power);
     const tr = document.createElement("tr");
-    if (n === lot) tr.classList.add("lot-row");
     const deltaStr = result ? fmtPct(result.delta) : "\u2013";
     const nC = result ? result.nControl : "\u2013";
     const nT = result ? result.nTrial : "\u2013";
     tr.innerHTML =
-      `<td>${n}${n === lot ? " (lot)" : ""}</td>` +
+      `<td>${n}</td>` +
       `<td>${nC}</td>` +
       `<td>${nT}</td>` +
       `<td>${deltaStr}</td>`;
@@ -427,7 +415,6 @@ $("sigmaNum").addEventListener("input", () => {
   const v = parseFloat($("sigmaNum").value);
   if (!isNaN(v) && v > 0) { $("sigma").value = Math.min(10, Math.max(0.2, v)); render(); }
 });
-$("lot").addEventListener("input", render);
 $("ratio").addEventListener("input", render);
 
 $("powerToggle").addEventListener("click", (e) => {
