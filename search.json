@@ -4,28 +4,28 @@
     "href": "examples/wafer_maps.html",
     "title": "Wafer maps",
     "section": "",
-    "text": "import plotnine as pn\npn.theme_set(pn.theme_minimal())\n\nfrom slimnine.example_data import load_wafer_dataset\nfrom slimnine.wafer_maps import (\n    WaferMapConfig,\n    plot_wafermap_diverge,\n    plot_wafermap_passfail,\n    plot_wafermap_spectral,\n)\n\ndf = load_wafer_dataset()\ndf.shape\nkpis = ['vt', 'idsat', 'ileak', 'freq']"
+    "text": "import plotnine as pn\npn.theme_set(pn.theme_minimal())\n\nfrom slimnine.example_data import generate_wafer_dataset, VariationConfig\nfrom slimnine.wafer_maps import (\n    WaferMapConfig,\n    plot_wafermap_diverge,\n    plot_wafermap_passfail,\n    plot_wafermap_spectral,\n)\n\ndf = generate_wafer_dataset(seed=0)\ndf.shape\nkpis = ['vt', 'idsat', 'ileak', 'freq']"
   },
   {
     "objectID": "examples/wafer_maps.html#setup",
     "href": "examples/wafer_maps.html#setup",
     "title": "Wafer maps",
     "section": "",
-    "text": "import plotnine as pn\npn.theme_set(pn.theme_minimal())\n\nfrom slimnine.example_data import load_wafer_dataset\nfrom slimnine.wafer_maps import (\n    WaferMapConfig,\n    plot_wafermap_diverge,\n    plot_wafermap_passfail,\n    plot_wafermap_spectral,\n)\n\ndf = load_wafer_dataset()\ndf.shape\nkpis = ['vt', 'idsat', 'ileak', 'freq']"
+    "text": "import plotnine as pn\npn.theme_set(pn.theme_minimal())\n\nfrom slimnine.example_data import generate_wafer_dataset, VariationConfig\nfrom slimnine.wafer_maps import (\n    WaferMapConfig,\n    plot_wafermap_diverge,\n    plot_wafermap_passfail,\n    plot_wafermap_spectral,\n)\n\ndf = generate_wafer_dataset(seed=0)\ndf.shape\nkpis = ['vt', 'idsat', 'ileak', 'freq']"
   },
   {
     "objectID": "examples/wafer_maps.html#data",
     "href": "examples/wafer_maps.html#data",
     "title": "Wafer maps",
     "section": "Data",
-    "text": "Data\n\ndf.head()\n\n\n\n\n\n\n\n\nlot_id\nwafer_id\nwafer_no\nx_test\ny_test\nrow\ncol\ndie_id\nradius\nvt\nidsat\nileak\nfreq\npass\n\n\n\n\n0\nL01\nL01_W1\n1\n-7.0\n-53.0\n107\n47\n107.047\n53.460266\n421.196655\n744.040527\n1.299517\n1260.561890\nFalse\n\n\n1\nL01\nL01_W1\n1\n-6.0\n-53.0\n107\n48\n107.048\n53.338543\n423.639282\n754.190918\n1.331304\n1314.362793\nFalse\n\n\n2\nL01\nL01_W1\n1\n-5.0\n-53.0\n107\n49\n107.049\n53.235325\n418.899841\n767.694702\n1.254430\n1327.068848\nFalse\n\n\n3\nL01\nL01_W1\n1\n-4.0\n-53.0\n107\n50\n107.050\n53.150730\n424.850250\n738.990356\n1.323661\n1243.635742\nFalse\n\n\n4\nL01\nL01_W1\n1\n-3.0\n-53.0\n107\n51\n107.051\n53.084839\n416.719666\n750.011414\n1.235050\n1310.473389\nFalse\n\n\n\n\n\n\n\nThe bundled dataset has 3 lots × 6 wafers × ~9k die. KPIs are vt, idsat, ileak, freq; the boolean pass column is derived from spec limits on the other three."
+    "text": "Data\n\ndf.head()\n\n\n\n\n\n\n\n\nlot_id\nwafer_id\nwafer_no\nx_test\ny_test\nrow\ncol\ndie_id\nradius\nvt\nidsat\nileak\nfreq\npass\n\n\n\n\n0\nL01\nL01_W1\n1\n-7.0\n-53.0\n107\n47\n107.047\n53.460266\n422.365662\n778.273804\n1.691790\n1349.776611\nFalse\n\n\n1\nL01\nL01_W1\n1\n-6.0\n-53.0\n107\n48\n107.048\n53.338543\n423.799957\n783.655151\n1.641533\n1374.748047\nFalse\n\n\n2\nL01\nL01_W1\n1\n-5.0\n-53.0\n107\n49\n107.049\n53.235325\n421.654419\n790.690796\n1.639113\n1399.285767\nFalse\n\n\n3\nL01\nL01_W1\n1\n-4.0\n-53.0\n107\n50\n107.050\n53.150730\n424.864929\n776.600281\n1.621792\n1344.805664\nFalse\n\n\n4\nL01\nL01_W1\n1\n-3.0\n-53.0\n107\n51\n107.051\n53.084839\n421.046082\n782.350037\n1.652973\n1376.828491\nFalse\n\n\n\n\n\n\n\nThe example dataset has 3 lots × 6 wafers × ~9k die. KPIs are vt, idsat, ileak, freq; the boolean pass column is derived from spec limits on the other three."
   },
   {
     "objectID": "examples/wafer_maps.html#kpi-spectral",
     "href": "examples/wafer_maps.html#kpi-spectral",
     "title": "Wafer maps",
     "section": "KPI spectral",
-    "text": "KPI spectral\nA lot_id × wafer_no grid surfaces both lot-level shifts (rows) and within-lot variation (columns).\n\ncfg = WaferMapConfig(\n    facet=pn.facet_wrap(\"wafer_id\", nrow = 3),\n    fig_size=(14, 8),\n    panel_spacing=0.01\n)\n\nfor kpi in kpis:\n    plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)\n    plot.show()"
+    "text": "KPI spectral\nA lot_id × wafer_no grid surfaces both lot-level shifts (rows) and within-lot variation (columns).\n\ncfg = WaferMapConfig(\n    facet=pn.facet_wrap(\"wafer_id\", nrow = 3),\n    fig_size=(14, 8),\n    panel_spacing=0.01\n)\n\nvcg = VariationConfig()\ndf = generate_wafer_dataset(seed=0, )\n\nfor kpi in kpis:\n    plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)\n    plot.show()"
   },
   {
     "objectID": "examples/wafer_maps.html#pass-fail",
@@ -35,11 +35,28 @@
     "text": "Pass / fail\n\nplot_wafermap_passfail(df, kpi=\"pass\", cfg=cfg)"
   },
   {
+    "objectID": "examples/wafer_maps.html#tweak-data",
+    "href": "examples/wafer_maps.html#tweak-data",
+    "title": "Wafer maps",
+    "section": "Tweak data",
+    "text": "Tweak data\n\nvar_conf = VariationConfig(wafer_to_wafer=2.5, within_wafer_noise=0.5, gradient_strength=4, scratch_kpi_impact=4, scratch_incidence=3)\ndf = generate_wafer_dataset(seed=0, config=var_conf)\n\nkpi_plot = [\"vt\"]\nfor kpi in kpi_plot:\n    plot = plot_wafermap_spectral(df, kpi=kpi, cfg=cfg)\n    plot.show()"
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "slimnine examples",
     "section": "",
     "text": "Worked examples for the slimnine plotting helpers, run against the bundled synthetic wafer dataset.",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "index.html#tools",
+    "href": "index.html#tools",
+    "title": "slimnine examples",
+    "section": "Tools",
+    "text": "Tools\n\nSplit DOE wafer count estimator — interactive calculator for how many wafers a control-vs-trial yield split needs to detect a given yield delta, from an estimate of wafer-to-wafer spread.",
     "crumbs": [
       "Home"
     ]
