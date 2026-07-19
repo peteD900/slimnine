@@ -16,6 +16,12 @@ plotting helpers, run against the bundled synthetic wafer dataset.
 ::: {#example-list}
 :::
 
+## Tools
+
+- [Split DOE wafer count estimator](tools/split_doe_power.html) — interactive
+  calculator for how many wafers a control-vs-trial yield split needs to
+  detect a given yield delta, from an estimate of wafer-to-wafer spread.
+
 ## Rendering
 
 From the repo root, with the project venv active:
