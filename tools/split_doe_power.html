@@ -111,6 +111,17 @@
   }
   .seg button + button { border-left: 1px solid var(--hairline); }
   .seg button.active { background: var(--accent); color: #fff; }
+  /* secondary controls below table */
+  .secondary { margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px solid var(--hairline); }
+  .secondary label { font-size: 0.8rem; color: var(--text-muted); }
+  .secondary .row { gap: 0.6rem; }
+  .ratio-value {
+    min-width: 3.5rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
   .footnote { color: var(--text-muted); font-size: 0.8rem; margin-top: 1.2rem; }
   .footnote p { margin-bottom: 0.45rem; }
 </style>
@@ -169,12 +180,20 @@
         <thead>
           <tr>
             <th>Total wafers</th>
-            <th>Per arm</th>
+            <th>Control</th>
+            <th>Trial</th>
             <th>Smallest detectable &Delta;yield</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
+    </div>
+    <div class="secondary">
+      <label for="ratio">Split ratio (control : trial)</label>
+      <div class="row">
+        <input type="range" id="ratio" min="0" max="4" step="1" value="0">
+        <span class="ratio-value" id="ratioLabel">1 : 1</span>
+      </div>
     </div>
   </div>
 
@@ -325,9 +344,17 @@ function exactPower(nC, nT, sigma, delta, alpha) {
 
 const ALPHA = 0.05;
 
-function minDetectableDelta(sigma, totalWafers, power) {
-  const nT = Math.floor(totalWafers / 2);
-  if (nT < 2) return null;
+// ratio = control:trial, always >= 1 so control >= trial
+const RATIOS = [
+  { r: 1, label: "1 : 1" },
+  { r: 2, label: "2 : 1" },
+  { r: 3, label: "3 : 1" },
+  { r: 4, label: "4 : 1" },
+  { r: 5, label: "5 : 1" },
+];
+
+function minDetectableDelta(sigma, totalWafers, ratio, power) {
+  const nT = Math.max(2, Math.floor(totalWafers / (1 + ratio)));
   const nC = totalWafers - nT;
   if (nC < 2) return null;
   let lo = 1e-6, hi = 100 * sigma;
@@ -356,8 +383,11 @@ function render() {
   const lot = Math.max(4, parseInt($("lot").value, 10) || 25);
   const power = selectedPower();
   const pctLabel = power === 0.9 ? "90" : "80";
+  const ratio = RATIOS[parseInt($("ratio").value, 10)];
 
-  const mde = minDetectableDelta(sigma, lot, power);
+  $("ratioLabel").textContent = ratio.label;
+
+  const mde = minDetectableDelta(sigma, lot, ratio.r, power);
   if (mde) {
     $("mde80").textContent = fmtPct(mde.delta);
     $("mde80label").textContent =
@@ -365,7 +395,7 @@ function render() {
       `(${mde.nControl}\u2009control + ${mde.nTrial}\u2009trial wafers)`;
   } else {
     $("mde80").textContent = "\u2013";
-    $("mde80label").textContent = "lot too small for a 1:1 split";
+    $("mde80label").textContent = "lot too small for this split";
   }
 
   /* build table rows for a range of total-wafer counts up to lot size */
@@ -377,14 +407,16 @@ function render() {
   const tbody = $("results").querySelector("tbody");
   tbody.textContent = "";
   for (const n of rows) {
-    const result = minDetectableDelta(sigma, n, power);
+    const result = minDetectableDelta(sigma, n, ratio.r, power);
     const tr = document.createElement("tr");
     if (n === lot) tr.classList.add("lot-row");
-    const perArm = Math.floor(n / 2);
     const deltaStr = result ? fmtPct(result.delta) : "\u2013";
+    const nC = result ? result.nControl : "\u2013";
+    const nT = result ? result.nTrial : "\u2013";
     tr.innerHTML =
       `<td>${n}${n === lot ? " (lot)" : ""}</td>` +
-      `<td>${perArm}</td>` +
+      `<td>${nC}</td>` +
+      `<td>${nT}</td>` +
       `<td>${deltaStr}</td>`;
     tbody.appendChild(tr);
   }
@@ -396,6 +428,7 @@ $("sigmaNum").addEventListener("input", () => {
   if (!isNaN(v) && v > 0) { $("sigma").value = Math.min(10, Math.max(0.2, v)); render(); }
 });
 $("lot").addEventListener("input", render);
+$("ratio").addEventListener("input", render);
 
 $("powerToggle").addEventListener("click", (e) => {
   const btn = e.target.closest("button");
